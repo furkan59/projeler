@@ -1,0 +1,527 @@
+package sýkýþtýrýlmýþBaðlantýlý;
+
+import java.util.ArrayList;
+
+import veriYapýlarý.BoolDizi;
+import veriYapýlarý.BoolVektör;
+import SýkýþtýrýlmýþMetaSezgisel.Kümeleme2;
+import SýkýþtýrýlmýþVeriYapýlarý.BoolEksikMatrisAðaçlý;
+/**
+ * ilk önce en iyi sutun diziliþini bulacak
+ * <br>-------------sutun diziliþi yöntemi ----------------
+ * <br> en iyi parça diziliþleri boþ olarak oluþturulur kullanýlan fonk : parçalarEnÝyiDiziliþleriOluþtur();
+ * <br> parça "1" için çözüm yapýlacaksa þöyle olur
+ * <br> 
+ * @author Furkan
+ *
+ */
+
+public class sýkýþtýrýlmýþBaðEnerji extends Kümeleme2{
+
+	ArrayList<ArrayList<Integer>> parçaEnÝyiDiziliþ = new ArrayList<ArrayList<Integer>>(); // tüm parçalar için en iyi diziliþler
+	ArrayList<Integer> parçalarEnÝyiDiziliþ = new ArrayList<Integer>(); // tüm parçalarýn en iyisinin en iyisi
+	int [][] parçalarýnBenzerliði = new int [parçaSayýsý()][]; // tekrar lý br þekilde kullanýldýðý için 
+	
+	ArrayList<ArrayList<Integer>> makineEnÝyiDiziliþ = new ArrayList<ArrayList<Integer>>(); // tüm parçalar için en iyi diziliþler
+	ArrayList<Integer> makinelerEnÝyiDiziliþ = new ArrayList<Integer>(); // tüm parçalarýn en iyisinin en iyisi
+	int [][] makinelerinBenzerliði = new int [makineSayýsý()][];// tekrar lý br þekilde kullanýldýðý için
+	
+	int [] denemeler ; // enerjisi hesaplanacak en iyisi en iyi diziliþ olacak
+	int ekVeriler []; // 
+    String yazý = ""; // çözümü tutar
+    int aþamaNo = 0;
+    
+	public sýkýþtýrýlmýþBaðEnerji(BoolEksikMatrisAðaçlý parçaMakine, String[] makineÝsimleri, String[] parçaÝsimleri) {
+		super(parçaMakine, makineÝsimleri, parçaÝsimleri);
+		parçalarýnBenzerliðiniOluþtur();
+		makinelerinBenzerliðiniOluþtur();
+	}
+	public sýkýþtýrýlmýþBaðEnerji(String yazý, char ayýrýcý) throws Exception {
+		super(yazý, ayýrýcý);
+		parçalarýnBenzerliðiniOluþtur();
+		makinelerinBenzerliðiniOluþtur();
+	}
+	public sýkýþtýrýlmýþBaðEnerji(String yazý) throws Exception {
+		super(yazý);
+		parçalarýnBenzerliðiniOluþtur();
+		makinelerinBenzerliðiniOluþtur();
+	}
+    
+	// sutunlar kýsmý
+	private void parçalarEnÝyiDiziliþleriOluþtur(){
+		int parçaNo;
+		for(parçaNo=0;parçaNo<parçaSayýsý();parçaNo++){
+			ArrayList<Integer> aþama = new ArrayList<Integer>();
+			aþama.add(parçaNo);
+			parçaEnÝyiDiziliþ.add(aþama);
+		}
+	}
+	/**
+	 * en iyi diziliþ içinde olmayanlar ek sutunlarýna dahil edilir
+	 */
+	private void ekVerilerDizisiniOluþturSutun(){
+		ArrayList<Integer> diziliþ = parçaEnÝyiDiziliþ.get(aþamaNo);
+		ekVeriler = new int [parçaSayýsý()- diziliþ.size()];
+		int elemanNo,ekSutunuNo = 0;
+		for(elemanNo=0;elemanNo<parçaSayýsý();elemanNo++){
+			if(diziliþ.contains(elemanNo)== false){
+				ekVeriler[ekSutunuNo] = elemanNo;
+				ekSutunuNo++;
+			}
+		}
+	}
+    private void parçalarýnBenzerliðiniOluþtur(){
+    	int parçaNo;
+    	for(parçaNo=0;parçaNo<parçaSayýsý();parçaNo++){
+    		parçaSatýrýDoldur(parçaNo);
+    	}
+    }
+    private void parçaSatýrýDoldur(int parçaNo){
+    	parçalarýnBenzerliði [parçaNo] = new int [parçaNo+1];
+    	int parça2;
+    	for(parça2=0;parça2<parçalarýnBenzerliði[parçaNo].length;parça2++){
+    		parçalarýnBenzerliði [parçaNo][parça2] = baðEnerjisiHesapla(parçaNo, parça2);
+    		System.out.print(parçalarýnBenzerliði [parçaNo][parça2] + ",");
+    	}
+    	System.out.print("\n");
+    }
+    /**
+     * büyük olan satýrdan küçük  olan sutundan bulunacak
+     * @param parça1
+     * @param parça2
+     * @return
+     */
+	public int parçaBenzerlikEriþ(int parça1, int parça2){
+		if(parça1 > parça2){
+			return parçalarýnBenzerliði[parça1] [parça2];
+		}
+		else{
+			return parçalarýnBenzerliði[parça2] [parça1];
+		}
+	}
+    /** 
+     * iki parçanýn bað enerjisini hesaplar 
+     * @param parça1
+     * @param parça2
+     * @return
+     */
+    private int baðEnerjisiHesapla(int parça1,int parça2){
+        int satýrNo,enerji= 0;
+        for(satýrNo=0;satýrNo<makineSayýsý();satýrNo++){
+        	if(parçaMakine.eriþ(satýrNo, parça1) && parçaMakine.eriþ(satýrNo, parça2)){
+        		enerji ++;
+        	}
+        }
+        return enerji;
+    }
+    /**
+     * her aþamada en iyi diziliþe ek olarak bir sutun gelecek ama
+     * <br> farklý taraflarýna gelebilir mesela en iyi diziliþ 1 , 2 ,3  ise ve ek sutun 4 ise 
+     * <br> þu dizilimler olabilir
+     * <br> 4,1,2,3 ; 1,4,2,3 ; 1,2,4,3 ; 1,2,3,4 
+     * <br> bunlarý tek tek ek sutun hangi konumda en iyi enerjiyi verir onu bulucaz   
+     * <br> geri deðer dönerken þunu yapar 
+     * <br> dizi [0] = enerji
+     * <br> dizi [1] = konum
+     * <br> UYARI : deneme sutunlarý dizisi dolu olmalýdýr
+     * @param ekSutun
+     * @return
+     */
+    private int[] ekSutunÝleEnÝyiEnerjiKonumHesapla(int ekSutun){
+    	denemeSutunlarýÝlkDeðerAtama();
+    	denemeler[0] = ekSutun;
+    	int [] enerjiVeKonum = new int [2];
+    	int ekSutunKonumu;
+    	enerjiVeKonum [0] = denemeSutunlarýnýnEnerjisiniHesapla(); // ilk deneme için uygun bir enerji
+    	enerjiVeKonum [1] = 0; // en iyi konum 0 olsun 
+    	for(ekSutunKonumu = 1;ekSutunKonumu<denemeler.length;++ekSutunKonumu){
+    		ekSutunKonumuÝçinEnerjiKýyasla(enerjiVeKonum, ekSutunKonumu);
+    	}
+    	return enerjiVeKonum;
+    }
+	private void ekSutunKonumuÝçinEnerjiKýyasla(int[] enerjiVeKonum, int ekSutunKonumu) {
+		int yeniEnerji = denemeSutunlarýnýnEnerjisiniHesapla();
+		if(yeniEnerji > enerjiVeKonum [0]){
+			enerjiVeKonum [0] = yeniEnerji;
+			enerjiVeKonum [1] = ekSutunKonumu;
+		}
+		ekVeriyiÝleriAl(ekSutunKonumu);
+	}
+	/** 
+	 * oluþturma ve en iyi kýsmý aktarma iþini yapar
+	 */
+    private void denemeSutunlarýÝlkDeðerAtama() {
+    	ArrayList<Integer> diziliþ = parçaEnÝyiDiziliþ.get(aþamaNo);
+		denemeler = new int [diziliþ.size()+1]; // en iyi diziliþ + ek sutun
+		enÝyiDiziliþiDenemeyeAktarSutun();
+	}
+    private int denemeSutunlarýnýnEnerjisiniHesapla(){
+    	int parçaNo;
+    	int enerji = 0;
+    	for(parçaNo = 0;parçaNo<denemeler.length-1;parçaNo++){
+    		enerji += parçaBenzerlikEriþ(denemeler[parçaNo],denemeler[parçaNo +1]);
+    	}
+    	return enerji;
+    }
+
+    /**
+     * deneme sutunlarýnýn ilk kýsmý en iyi diziliþ dizisidir bunlarý aktarýcaz sonra da  ek sutun gelecek onun yeir deðiþebilir 
+     */
+    private void enÝyiDiziliþiDenemeyeAktarSutun(){
+    	ArrayList<Integer> diziliþ = parçaEnÝyiDiziliþ.get(aþamaNo);
+    	int elemanNo;
+    	for(elemanNo=0;elemanNo<diziliþ.size();elemanNo++){
+    		denemeler [elemanNo+1] = diziliþ.get(elemanNo);
+    	}
+    }
+    private void ekVeriyiÝleriAl(int ekVeriKonumu){
+         int ekVerininDeðeri = denemeler [ekVeriKonumu] ;
+         denemeler [ekVeriKonumu] = denemeler [ekVeriKonumu+1];
+         denemeler [ekVeriKonumu+1] = ekVerininDeðeri;
+    }
+
+    /**
+     * tüm ekSutunlarý tüm konumlarda dener ve en iyi enerjiyi veren ek sutununun kendisini ve konumunu bulur
+     * dizi [0] = en iyi ek sutun kim 
+     * dizi [1] = en iyi konumu neresi
+     * dizi [2] = en yüksek enerji
+     * @return
+     */
+    private int[] tümEkSutunlarýnEnÝyiEnerjiVereniniHesapla(){
+    	ekVerilerDizisiniOluþturSutun();
+    	int ekSutunNo; 
+    	int [] sutunKonumEnerji = new int [3];
+    	sutunKonumEnerji [0] = ekVeriler[0]; // baþlangýç çözümü
+    	int [] enerjiKonum = ekSutunÝleEnÝyiEnerjiKonumHesapla(ekVeriler[0]);
+    	sutunKonumEnerji [1] = enerjiKonum[1]; // baþlangýç çözümü
+    	sutunKonumEnerji [2] = enerjiKonum[0]; // baþlangýç
+    	for(ekSutunNo=0;ekSutunNo<ekVeriler.length;ekSutunNo++){
+    		yeniEnerjiVeKonumKýyaslaSutun(ekSutunNo, sutunKonumEnerji);
+    	}
+    	return sutunKonumEnerji;
+    }
+	private void yeniEnerjiVeKonumKýyaslaSutun(int ekSutunNo, int[] sutunKonumEnerji) {
+		int [] yeniEnerjiKonum  = ekSutunÝleEnÝyiEnerjiKonumHesapla(ekVeriler[ekSutunNo]);
+		if(yeniEnerjiKonum [0] > sutunKonumEnerji [2]){
+			sutunKonumEnerji [0] = ekVeriler[ekSutunNo]; // en iyi ek sutun kim
+			sutunKonumEnerji [1] = yeniEnerjiKonum[1];    // neredeyken en iyi ( konumu neresi)
+			sutunKonumEnerji [2] = yeniEnerjiKonum [0];  // yeni enyüksek enerji
+		}
+	}
+
+    public int parçaÝçinÇöz(int parçaNo) throws Exception{
+    	aþamaNo = parçaNo;
+    	int parça;
+    	int [] sutunKonumEnerji = new int [3];
+    	for(parça=0;parça<parçaSayýsý()-1;parça++){
+    		sutunKonumEnerji = tümEkSutunlarýnEnÝyiEnerjiVereniniHesapla();
+    		yeniElemanýYerleþtirParça(sutunKonumEnerji[0], sutunKonumEnerji[1]);
+    	}
+    	yazý += "en iyi diziliþ : " + parçaEnÝyiDiziliþ.get(parçaNo).toString() + "enerji : " +  sutunKonumEnerji[2] + "\n\n";
+    	yazý += "bu diziliþ için parça makine matrisi : \n" + sutunDiziliþindenParçaMakineMatrisiOluþtur(parçaEnÝyiDiziliþ.get(parçaNo)).yaz() + "\n\n";
+        return sutunKonumEnerji[2];
+    }
+    /**
+     * yeni elemaný en iyi diziliþe dahil eder
+     * @param yeniParça
+     * @param konum
+     */
+    private void yeniElemanýYerleþtirParça(int yeniParça, int konum){
+    	ArrayList<Integer> diziliþ = parçaEnÝyiDiziliþ.get(aþamaNo);
+    	if(konum >= diziliþ.size()){ // demek ki eleman sona geleecek
+    		 diziliþ .add(yeniParça);
+    	}
+    	else { // eleman araya girecek
+    		 diziliþ .add(konum, yeniParça);
+    	}
+    }
+    /**
+     * dizi [0] = en iyi çözüm hangi makine ile baþlanýnca saðlanýyor 
+     * <br>dizi [1] = en iyi enerji ne kadar
+     * @return
+     * @throws Exception 
+     */
+    public int [] tümParçalarÝçinÇöz() throws Exception{
+    	parçalarEnÝyiDiziliþleriOluþtur();
+    	int [] enÝyiParçaEnerji = new int [2]; 
+       	enÝyiParçaEnerji [0] = 0;
+       	yazý += "0 parçasý için çözülüyor \n" ;
+       	enÝyiParçaEnerji [1] = parçaÝçinÇöz(0);
+    	int parçaNo;
+    	for(parçaNo=1;parçaNo<parçaSayýsý();parçaNo++){
+    		yazý += parçaNo + " parçasý için çözülüyor \n" ;
+    		yeniEnerjiKýyasalaParça(enÝyiParçaEnerji, parçaNo);
+    		yazý += "\n\n";
+    		herþeyiSýfýrla();
+    	}
+    	// en iyi enerjisi olaný akýlda tutmak lazým
+    	parçalarEnÝyiDiziliþ = parçaEnÝyiDiziliþ.get(enÝyiParçaEnerji[0]);
+    	return enÝyiParçaEnerji;
+    }
+	private void yeniEnerjiKýyasalaParça(int[] enÝyiParçaEnerji, int parçaNo) throws Exception {
+		int yeniEnerji = parçaÝçinÇöz(parçaNo);
+		if(yeniEnerji > enÝyiParçaEnerji[1]){
+			enÝyiParçaEnerji [1] = yeniEnerji;
+			enÝyiParçaEnerji [0] = parçaNo;
+		}
+	}
+    private void herþeyiSýfýrla(){
+    	denemeler = null;
+    	ekVeriler = null;
+    }
+    
+    // sutunlar bitiþ
+    
+    
+    
+    
+    // satýrlar benzerlik bulma
+    private void ekVerilerDizisiniOluþturSatýr(){
+		ArrayList<Integer> diziliþ = makineEnÝyiDiziliþ.get(aþamaNo);
+		ekVeriler = new int [makineSayýsý()- diziliþ.size()];
+		int elemanNo,ekSutunuNo = 0;
+		for(elemanNo=0;elemanNo<makineSayýsý();elemanNo++){
+			if(diziliþ.contains(elemanNo)== false){
+				ekVeriler[ekSutunuNo] = elemanNo;
+				ekSutunuNo++;
+			}
+		}
+	}
+    private void makinelerEnÝyiDiziliþleriOluþtur(){
+		int makineNo;
+		for(makineNo=0;makineNo<makineSayýsý();makineNo++){
+			ArrayList<Integer> aþama = new ArrayList<Integer>();
+			aþama.add(makineNo);
+			makineEnÝyiDiziliþ.add(aþama);
+		}
+	}
+    private void makinelerinBenzerliðiniOluþtur(){
+    	int makineNo;
+    	for(makineNo=0;makineNo<makineSayýsý();makineNo++){
+    		makineSatýrýDoldur(makineNo);
+    	}
+    }
+    private void makineSatýrýDoldur(int makineNo){
+    	makinelerinBenzerliði[makineNo] = new int [makineNo+1];
+    	int makine2;
+    	for(makine2=0;makine2<makinelerinBenzerliði[makineNo].length;makine2++){
+    		makinelerinBenzerliði [makineNo][makine2] = satýrBenzerlikBul(makineNo, makine2);
+    		System.out.print(makinelerinBenzerliði [makineNo][makine2]  + ",");
+    	}
+    	System.out.print("\n");
+    }
+    /**
+     * büyük olan satýrdan küçük olan sutunadan bulunacak
+     * @param makine1
+     * @param makine2
+     * @return
+     */
+    public int makineBenzerlikEriþ(int makine1, int makine2){
+    	if(makine1 > makine2){
+    		return makinelerinBenzerliði [makine1][makine2];
+    	}
+    	else {
+    		return makinelerinBenzerliði [makine2][makine1];
+    	}
+    }
+    /**
+    * makineler arasý benzerlik
+     * @param satýr1
+     * @param satýr2
+     * @return
+     */
+    private int satýrBenzerlikBul(int satýr1, int satýr2){
+    	return parçaMakine.benzerlikBul(satýr1, satýr2);
+    }
+    /**
+    * her aþamada en iyi diziliþe ek olarak bir sutun gelecek ama
+    * <br> farklý taraflarýna gelebilir mesela en iyi diziliþ 1 , 2 ,3  ise ve ek sutun 4 ise 
+    * <br> þu dizilimler olabilir
+    * <br> 4,1,2,3 ; 1,4,2,3 ; 1,2,4,3 ; 1,2,3,4 
+    * <br> bunlarý tek tek ek sutun hangi konumda en iyi enerjiyi verir onu bulucaz   
+    * <br> geri deðer dönerken þunu yapar 
+    * <br> dizi [0] = enerji
+    * <br> dizi [1] = konum
+    * <br> UYARI : deneme sutunlarý dizisi dolu olmalýdýr
+    * @param ekSatýr
+    * @return
+    */
+   private int[] ekSatýrÝleEnÝyiEnerjiKonumHesapla(int ekSatýr){
+   	denemeSatýrlarýÝlkDeðerAtama();
+   	denemeler[0] = ekSatýr;
+   	int [] enerjiVeKonum = new int [2];
+   	int eksatýrKonumu;
+   	enerjiVeKonum [0] = denemeSatýrlarýEnerjisiniHesapla(); // ilk deneme için uygun bir enerji
+   	enerjiVeKonum [1] = 0; // en iyi konum 0 olsun 
+   	for(eksatýrKonumu = 1;eksatýrKonumu<denemeler.length;eksatýrKonumu++){
+   		yeniEnerjiKýyaslaEkSatýr(enerjiVeKonum, eksatýrKonumu);
+   		ekVeriyiÝleriAl(eksatýrKonumu); // denemeler dizisini deðiþtirir
+   	}
+   	return enerjiVeKonum;
+   }
+	private void yeniEnerjiKýyaslaEkSatýr(int[] enerjiVeKonum, int ekSatýrKonumu) {
+		int yeniEnerji = denemeSatýrlarýEnerjisiniHesapla();
+   		if(yeniEnerji > enerjiVeKonum [0]){
+   			enerjiVeKonum [0] = yeniEnerji;
+   			enerjiVeKonum [1] = ekSatýrKonumu;
+   		}
+	}
+   /**
+    * makineler arasý benzerlikleri bulur
+    * @return
+    */
+   private int denemeSatýrlarýEnerjisiniHesapla(){
+   	int satýrNo;
+   	int enerji = 0;
+   	for(satýrNo = 0;satýrNo<denemeler.length-1;satýrNo++){
+   		enerji += makineBenzerlikEriþ(denemeler[satýrNo],denemeler[satýrNo+1]);
+   	}
+   	return enerji;
+   }
+
+   /**
+    * tüm ekSutunlarý tüm konumlarda dener ve en iyi enerjiyi veren ek sutununun kendisini ve konumunu bulur
+    * dizi [0] = en iyi ek sutun kim 
+    * dizi [1] = en iyi konumu neresi
+    * dizi [2] = en yüksek enerji
+    * @return
+    */
+   private int[] tümEkSatýrlarýnEnÝyiEnerjiVereniniHesapla(){
+   	ekVerilerDizisiniOluþturSatýr();
+   	int ekSatýrNo; 
+   	int [] satýrKonumEnerji = new int [3];
+   	satýrKonumEnerjiDoldur(satýrKonumEnerji);
+   	for(ekSatýrNo=0;ekSatýrNo<ekVeriler.length;ekSatýrNo++){
+   		yeniEnerjiVeKonumKýyaslaSatýr(ekSatýrNo, satýrKonumEnerji);
+   	}
+   	return satýrKonumEnerji;
+   }
+   private void satýrKonumEnerjiDoldur(int[] satýrKonumEnerji) {
+	satýrKonumEnerji [0] = ekVeriler[0]; // baþlangýç çözümü
+   	int [] enerjiKonum = ekSatýrÝleEnÝyiEnerjiKonumHesapla(ekVeriler[0]);
+   	satýrKonumEnerji [1] = enerjiKonum[1]; // baþlangýç çözümü
+   	satýrKonumEnerji [2] = enerjiKonum[0]; // baþlangýç
+}
+   private void yeniEnerjiVeKonumKýyaslaSatýr(int ekSatýrNo, int[] satýrKonumEnerji) {
+		int [] yeniEnerjiKonum  = ekSatýrÝleEnÝyiEnerjiKonumHesapla(ekVeriler[ekSatýrNo]);
+		if(yeniEnerjiKonum [0] > satýrKonumEnerji [2]){
+			satýrKonumEnerji [0] = ekVeriler[ekSatýrNo]; // en iyi ek sutun kim
+			satýrKonumEnerji [1] = yeniEnerjiKonum[1];    // neredeyken en iyi ( konumu neresi)
+			satýrKonumEnerji [2] = yeniEnerjiKonum [0];  // yeni enyüksek enerji
+		}
+	}
+
+   public int makineÝçinÇöz(int makineNo) throws Exception{
+	aþamaNo = makineNo;
+   	int [] satýrKonumEnerji = new int [3];
+   	int makine;
+   	for(makine=0;makine<makineSayýsý()-1;makine++){
+   		satýrKonumEnerji = tümEkSatýrlarýnEnÝyiEnerjiVereniniHesapla();
+   		yeniElemanýYerleþtirMakine(satýrKonumEnerji[0], satýrKonumEnerji[1]);
+   	  }
+   	yazý += "en iyi diziliþ : " + makineEnÝyiDiziliþ.get(makineNo).toString() + "enerji : " +  satýrKonumEnerji[2] + "\n\n";
+   	yazý += "bu diziliþ için parça makine matrisi : \n" + satýrDiziliþindenParçaMakineMatrisiOluþtur(makineEnÝyiDiziliþ.get(makineNo)).yaz() + "\n\n";
+    return satýrKonumEnerji[2]; // enerjiyi geri dönsün
+   }
+   private void yeniElemanýYerleþtirMakine(int yeniMakine, int konum) throws Exception{
+	ArrayList<Integer> diziliþ = makineEnÝyiDiziliþ.get(aþamaNo);
+   	if ( konum > diziliþ.size() ){
+   		throw new Exception("konum dýþarýda bir yerde \n girilen konum = " + konum + "\ndiziliþ : " + diziliþ.toString() + "\n");
+   	}
+	if(konum == diziliþ.size()){ // demek ki eleman sona geleecek
+   		diziliþ.add(yeniMakine);
+   	}
+   	else { // eleman araya girecek
+   		diziliþ.add(konum, yeniMakine);
+   	}
+   }
+   /**
+    * dizi [0] = en iyi çözüm hangi makine ile baþlanýnca saðlanýyor 
+   	* <br>dizi [1] = en iyi enerji ne kadar
+    * @return
+ * @throws Exception 
+    */
+   public int [] tümMakinelerÝçinÇöz() throws Exception{
+	makinelerEnÝyiDiziliþleriOluþtur();
+   	int makineNo;
+   	yazý += "0 makinesi için çözülüyor \n" ;
+   	int [] enÝyiMakineEnerji = new int [2]; 
+   	enÝyiMakineEnerji [0] = 0;
+   	enÝyiMakineEnerji [1] = makineÝçinÇöz(0);
+   	// dizi [0] = en iyi çözüm hangi makine ile baþlanýnca saðlanýyor 
+   	// dizi [1] = en iyi enerji ne kadar
+   	for(makineNo=1;makineNo<makineSayýsý();makineNo++){
+   		makineAþama(makineNo, enÝyiMakineEnerji);
+   	}
+   	return enÝyiMakineEnerji;
+   }
+   private void makineAþama(int makineNo, int[] enÝyiMakineEnerji) throws Exception {
+	yazý += makineNo + " makinesi için çözülüyor \n" ;
+	yeniEnerjiKýyaslaMakine(makineNo, enÝyiMakineEnerji);
+	yazý += "\n\n";
+	herþeyiSýfýrla();
+}
+   private void yeniEnerjiKýyaslaMakine(int makineNo, int[] enÝyiMakineEnerji) throws Exception {
+	int yeniEnerji = makineÝçinÇöz(makineNo);
+	if(yeniEnerji > enÝyiMakineEnerji[1]){
+		enÝyiMakineEnerji[0] = makineNo;
+		enÝyiMakineEnerji[1] = yeniEnerji;
+	}
+}
+   private void enÝyiDiziliþiDenemeyeAktarSatýr(){
+   	ArrayList<Integer> diziliþ = makineEnÝyiDiziliþ.get(aþamaNo);
+	int elemanNo;
+   	for(elemanNo=0;elemanNo<diziliþ.size();elemanNo++){
+   		denemeler [elemanNo+1] = diziliþ.get(elemanNo);
+   	}
+   }
+   
+   private void denemeSatýrlarýÝlkDeðerAtama() {
+	    ArrayList<Integer> diziliþ = makineEnÝyiDiziliþ.get(aþamaNo);
+		denemeler = new int [diziliþ.size()+1]; // en iyi diziliþ + ek sutun
+		enÝyiDiziliþiDenemeyeAktarSatýr();
+	}
+   
+   public void tümParçalarVeMakinelerÝçinÇöz() throws Exception{
+	   int [] makineEnerji  = tümMakinelerÝçinÇöz();
+	   int [] parçaEnerji = tümParçalarÝçinÇöz();
+	   yazý += "parçalar için en iyi diziliþ : parça no " + parçaEnerji[0] + " da ve " + parçaEnerji[1] + " kadar enerji ile saðlanmaktadýr \n";
+	   yazý += "makinler için en iyi diziliþ : makine no " + makineEnerji [0] + "da ve " + makineEnerji[1] + " kadar enerji ile saðlanmaktadýr \n";
+	   yazý += "bulunan en iyi parça makine matrisi : \n" + yeniParçaMakineDiziliþi(parçalarEnÝyiDiziliþ, makinelerEnÝyiDiziliþ).yaz() + "\n";
+   }
+   
+   // inþaa etme
+   public BoolDizi sutunDiziliþindenParçaMakineMatrisiOluþtur(ArrayList<Integer> sutunDiziliþ) throws Exception{
+	   BoolDizi yeniParçaMakineMatrisi = new BoolDizi(makineSayýsý(), parçaSayýsý(), false);
+	   int sutunNo;
+	   for(sutunNo=0;sutunNo<sutunDiziliþ.size();sutunNo++){
+		   BoolVektör yeniSutun = parçaMakine.sutunÇek(sutunDiziliþ.get(sutunNo));
+		   yeniParçaMakineMatrisi.sutunaYerleþ(sutunNo, yeniSutun);
+	   }
+	   return yeniParçaMakineMatrisi;
+   }
+   public BoolDizi satýrDiziliþindenParçaMakineMatrisiOluþtur(ArrayList<Integer> satýrDiziliþ) throws Exception{
+	   BoolDizi yeniParçaMakineMatrisi = new BoolDizi(makineSayýsý(), parçaSayýsý(), false);
+	   int satýrNo;
+	   for(satýrNo=0;satýrNo<satýrDiziliþ.size();satýrNo++){
+		   BoolVektör satýr = parçaMakine.satýrÇek(satýrNo);
+		   yeniParçaMakineMatrisi.satýraYerleþ(satýrNo, satýr);
+	   }
+	   return yeniParçaMakineMatrisi;
+   }
+
+   public BoolDizi yeniParçaMakineDiziliþi(ArrayList<Integer> parçaDiziliþ, ArrayList<Integer> makineDiziliþ) throws Exception{
+	   BoolDizi yeniParçaMakine = new BoolDizi(makineSayýsý(), parçaSayýsý(), false);
+	   int satýr,sutun;
+	   for(satýr=0;satýr<yeniParçaMakine.satýrSay();satýr++){
+		   for(sutun=0;sutun<yeniParçaMakine.sutunSay();sutun++){
+			   boolean yeniDeðer = parçaMakine.eriþ(satýr, sutun);
+			   yeniParçaMakine.deðiþ(satýr, sutun, yeniDeðer);
+		   } 
+	   }
+	   return yeniParçaMakine;
+   }
+   public String yaz(){
+    	return yazý;
+    }
+}
